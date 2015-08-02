@@ -403,6 +403,7 @@ void display_dir(int param,const char *path)
     strcpy(now_path,getcwd(NULL,0));
     //修改工作目录到参数目录
     if(chdir(path) == -1){
+        printf("这个:%s\n",path);
         my_err("chdir",__LINE__);
     }
 

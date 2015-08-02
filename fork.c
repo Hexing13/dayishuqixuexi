@@ -16,14 +16,16 @@ int main()
     pid = fork();
     switch(pid){
         case 0:
-            printf("孩子进程：%d %d  父进程：%d\n",pid,getpid(),getppid());
-            break;
+            while(1){
+                printf("child:%d parent:%d\n",getpid(),getppid());   
+                sleep(3);
+            }
         case -1:
             printf("创建进程失败！\n");
-            break;
+            exit(-1);
         default:
-            printf("父进程：%d %d\n",pid,getpid());
-            break;
+            printf("parent：%d\n",getpid());
+            exit(0);
     }
     return 0;
 }
