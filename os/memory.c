@@ -8,11 +8,14 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
+#include<unistd.h>
+#include<dirent.h>
 #include<sys/types.h>
 #include<ctype.h>
 #include<pthread.h>
 #include<fcntl.h>
 #include<semaphore.h>
+
 #define PROCESS_NAME_LEN 32   /*进程名长度*/
 #define MIN_SLICE    10             /*最小碎片的大小*/
 #define DEFAULT_MEM_SIZE 1024     /*内存大小*/
@@ -26,7 +29,7 @@
 int mem_size=DEFAULT_MEM_SIZE; /*内存大小*/
 int ma_algorithm = MA_FF;      /*当前分配算法*/
 static int pid = 0;            /*初始pid*/
-int flag = 0;                 /*设置内存大小标志*/
+int flag = 0;                 /*设置内存大小的标志*/
 
 /*描述每一个空闲块的数据结构*/
 struct free_block_type{
@@ -36,7 +39,7 @@ struct free_block_type{
 };  
 
 /*指向内存中空闲块链表的首指针*/
-struct free_block_type *free_block;
+struct free_block_type *free_block = NULL;
 
 /*每个进程分配到的内存块的描述*/
 struct allocated_block{
@@ -50,7 +53,7 @@ struct allocated_block{
 /*进程分配内存块链表的首指针*/
 struct allocated_block *allocated_block_head = NULL;
 
-/*初始化空闲块，默认为一块，可以指定大小及起始地址*/
+/*初始化空闲块，默认为一块*/
 struct free_block_type *init_free_block(int mem_size){
     struct free_block_type *fb;
     fb=(struct free_block_type *)malloc(sizeof(struct free_block_type));
@@ -83,7 +86,7 @@ set_mem_size(){
         printf("Cannot set memory size again\n");
         return 0;
     }
-    printf("Total memory size =");
+    printf("Total memory size = ");
     scanf("%d", &size);
     if(size>0) {
         mem_size = size;
@@ -105,6 +108,7 @@ set_algorithm(){
 	//按指定算法重新排列空闲区链表
     rearrange(ma_algorithm); 
 }
+
 /*按指定的算法整理内存空闲块链表*/
 rearrange(int algorithm){
     switch(algorithm){
@@ -113,6 +117,7 @@ rearrange(int algorithm){
         case MA_WF: rearrange_WF(); break;
     }
 }
+
 //按FF算法重新整理内存空闲块链表
 rearrange_FF(){
     struct free_block_type *p0,*p1;
@@ -130,6 +135,7 @@ rearrange_FF(){
             }
         }
 }
+
 //按BF算法重新整理内存空闲块链表
 rearrange_BF(){
     struct free_block_type *p0,*p1;
@@ -209,7 +215,7 @@ int allocate_mem(struct allocated_block *ab){
     fbt = pre = free_block;//空闲链指针
     while(pre!=NULL){
         if(pre->size > request_size && (pre->size - request_size)>=MIN_SLICE){
-          //1. 找到可满足空闲分区且分配后剩余空间足够大，则分割 
+            //1. 找到可满足空闲分区且分配后剩余空间足够大，则分割 
             ab->start_addr = pre->start_addr;//设置进程起始地址
             pre->size-=request_size;//改变分割大小
             pre->start_addr+=request_size;//改变分割后起始地址
@@ -232,7 +238,7 @@ int allocate_mem(struct allocated_block *ab){
     //内存紧缩技术
     //思想:将现有进程的起始地址从０开始依次改变，最后将空闲连的起始地址改变，大小变为剩余内存大小之和
     if((-1)==ret && sizesum >= request_size){
-        struct allocated_block *pal;
+        struct allocated_bmZock *pal;
         struct free_block_type *p,*q;
         int addr = 0;//记录当前分配内存的起始地址
         pal = allocated_block_head;
@@ -241,7 +247,7 @@ int allocate_mem(struct allocated_block *ab){
             addr = pal->start_addr+pal->size;
             pal = pal->next;
         }
-        //释放当前空闲块的
+        //释放当前空闲块
         q = free_block->next;
         while(q!=NULL){
             free_block->next = q->next;
@@ -395,11 +401,10 @@ display_mem_usage(){
 
 int main(){
     char choice;      
-    pid=0;
+    pid = 0;
     free_block = init_free_block(mem_size); //初始化空闲区
     while(1) {
         display_menu();	//显示菜单
-        fflush(stdin);
         choice=getchar();	//获取用户输入
         switch(choice){
             case '1': set_mem_size(); break; 	//设置内存大小
@@ -407,8 +412,11 @@ int main(){
             case '3': new_process(); flag=1; break;//创建新进程
             case '4': kill_process(); flag=1;   break;//删除进程
             case '5': display_mem_usage(); flag=1;break;	//显示内存使用
-            case '0': do_exit(); exit(0);	//释放链表并退出
+            case '0': 
+                      //do_exit(); 
+                      exit(0);	//释放链表并退出
             default: break;      
         }    
+        getchar();
     } 
 }
