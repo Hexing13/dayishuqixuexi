@@ -20,8 +20,6 @@
 #define PARAM_NONE 0  //无参数
 #define PARAM_a 1  //-a显示所有文件
 #define PARAM_l 2  //-l一行只显示一个文件的全部信息
-#define PARAM_R 4 //-R递归显示
-#define PARAM_t 8  //按时间顺序显示
 #define MAXROWLEN 100 //每行显示的最多字符数
 #define MAX 100 //路径名的最大长度
 #define FILE_MAX 300 //目录下最多存储的文件数
@@ -35,23 +33,25 @@ int main(int argc,char **argv)
     int i = 0, num = 0;
     char opt; //getopt()返回值
     char path[300]; //文件或文件夹的名字
+    int count = 0;
 
     //获得选项值
     opterr = 0; //不显示参数错误信息
-    while((opt = getopt(argc,argv,"Ralt"))!= -1){
+    while((opt = getopt(argc,argv,"al"))!= -1){
         if(opt == 'a'){
             param |= PARAM_a;
         }else if(opt == 'l'){
             param |= PARAM_l;
-        }else if(opt == 'R'){
-            param |= PARAM_R;
-        }else if(opt == 't'){
-            param |= PARAM_t;
+            count++;
         }else{
-            printf("抱歉，目前只支持alRt选项查询!\n");
+            printf("抱歉，目前只支持al选项查询!\n");
             exit(1);
         }
     }
+    if(count==2){
+        param = 3;
+    }
+    printf("%d\n",param);
 
     //判断是否输入目录或者文件
     for(i = 0; i < argc; i++){
@@ -438,7 +438,7 @@ void display_dir(int param,const char *path)
     }
     
     //在判断是否迭代显示即-R功能
-    if(param & PARAM_R){
+ /*   if(param & PARAM_R){
         //先把当前目录下的所有文件或目录当做文件显示出来
         printf("%s:\n",path);
         for(i = 0; i < count; i++){
@@ -463,12 +463,11 @@ void display_dir(int param,const char *path)
             printf("\n\n");
             display_dir(param,child_path);
         }
-    }else{
+    }else{*/
         for(j = 0; j < count; j++){
            display_file(param,filenames[j]);
         }
         printf("\n");
-    }
 
     //更改工作目录到父目录
     if(chdir(now_path) == -1){
