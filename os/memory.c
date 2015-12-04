@@ -238,7 +238,7 @@ int allocate_mem(struct allocated_block *ab){
     //内存紧缩技术
     //思想:将现有进程的起始地址从０开始依次改变，最后将空闲连的起始地址改变，大小变为剩余内存大小之和
     if((-1)==ret && sizesum >= request_size){
-        struct allocated_bmZock *pal;
+        struct allocated_block *pal;
         struct free_block_type *p,*q;
         int addr = 0;//记录当前分配内存的起始地址
         pal = allocated_block_head;
@@ -397,7 +397,26 @@ display_mem_usage(){
     printf("----------------------------------------------------------\n");
     return 0;
 }
-
+do_exit()
+{
+    struct free_block_type *p1,*p2;
+    struct allocated_block *a1,*a2;
+    p1 = free_block;
+    if(p1!=NULL){
+        p2 = p1->next;
+        for(;p2!=NULL;p1=p2,p2=p2->next)
+            free(p1);
+        free(p1);
+    }
+    
+    a1 = allocated_block_head;
+    if(a1!=NULL){
+        a2 = a1->next;
+        for(;a2!=NULL;a1=a2,a2=a2->next)
+            free(a1);
+        free(a1);
+    }
+}
 
 int main(){
     char choice;      
@@ -407,14 +426,12 @@ int main(){
         display_menu();	//显示菜单
         choice=getchar();	//获取用户输入
         switch(choice){
-            case '1': set_mem_size(); break; 	//设置内存大小
-            case '2': set_algorithm();flag=1; break;//设置算法
-            case '3': new_process(); flag=1; break;//创建新进程
-            case '4': kill_process(); flag=1;   break;//删除进程
+            case '1': set_mem_size(); system("cls"); break; 	//设置内存大小
+            case '2': set_algorithm();flag=1; system("cls"); break;//设置算法
+            case '3': new_process(); flag=1; system("cls"); break;//创建新进程
+            case '4': kill_process(); flag=1;  system("cls");  break;//删除进程
             case '5': display_mem_usage(); flag=1;break;	//显示内存使用
-            case '0': 
-                      //do_exit(); 
-                      exit(0);	//释放链表并退出
+            case '0': do_exit(); exit(0);	//释放链表并退出
             default: break;      
         }    
         getchar();
